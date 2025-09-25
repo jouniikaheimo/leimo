@@ -186,7 +186,7 @@ window.liveThemeManager = function() {
                        max="100"
                        :value="opacityValues.tab_background_opacity"
                        @input="updateOpacity('tab_background_opacity', $event.target.value)"
-                       class="w-full h-3 rounded-lg appearance-none cursor-pointer opacity-slider"
+                       class="w-full h-3 mt-3 rounded-lg appearance-none cursor-pointer opacity-slider"
                        :style="`background: linear-gradient(to right, ${currentColors.primary}40, ${currentColors.primary})`">
 
                 <div class="flex justify-between text-xs text-gray-500">

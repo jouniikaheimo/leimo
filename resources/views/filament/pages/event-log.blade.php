@@ -184,13 +184,19 @@
                         x-ref="tabList"
                         @scroll.passive="update()"
                 >
-                    @foreach ($userSummaries as $summary)
+                    @foreach ($userSummaries as $index => $summary)
                         @php
                             $user = $summary['user'];
-                            $hash = crc32(($user->email ?? '') . '|' . $user->name);
-                            $h = $hash % 360;
-                            $bg = "hsl($h 65% 88%)";   // pastel background
-                            $border = "hsl($h 45% 70%)"; // slightly darker for border
+
+                            // Käytä asetuksista määriteltyjä käyttäjävärejä
+                            $userColorData = \App\Services\ThemeColorService::getUserColor($index);
+                            $bg = $userColorData['original'];
+                            $border = $userColorData['original'];
+
+                            // DEBUG: Tulosta värit konsoliin (poista tämä kun toimii)
+                            if ($index < 3) {
+                                \Log::info("EventLog User $index ({$user->name}): Original={$userColorData['original']}, BG=$bg, Border=$border");
+                            }
 
                             // Build two-letter initials
                             $parts = array_values(array_filter(preg_split('/\s+/', trim((string) $user->name))));
@@ -202,7 +208,7 @@
                                 type="button"
                                 @click="activeUser = '{{ $user->id }}'"
                                 title="{{ $user->name }}"
-                                class="relative flex h-28 min-w-[4.25rem] items-center justify-center rounded-xl border text-left shadow-sm transition focus-visible:outline-none
+                                class="relative flex h-28 min-w-[4.25rem] items-center justify-center rounded-xl text-left shadow-sm transition focus-visible:outline-none
            lg:h-32 lg:w-[4.25rem] lg:flex-col lg:items-center lg:justify-start lg:rounded-l-2xl lg:rounded-r-none lg:py-2 lg:gap-0 lg:transition-all lg:duration-200 lg:ease-out"
                                 :class="activeUser === '{{ $user->id }}'
         ? 'lg:z-10 lg:translate-x-0 lg:opacity-100 lg:shadow'
@@ -250,19 +256,20 @@
 
             <!-- Right content area -->
             <div class="space-y-6 lg:flex-1">
-                @foreach ($userSummaries as $summary)
+                @foreach ($userSummaries as $index => $summary)
                     @php
                         $user = $summary['user'];
-                        $hashHeader = crc32(($user->email ?? '') . '|' . $user->name);
-                        $hh = $hashHeader % 360;
-                        $headerBg = "hsl($hh 65% 88%)";
-                        $headerBorder = "hsl($hh 45% 72%)";
+
+                        // Käytä asetuksista määriteltyjä käyttäjävärejä myös headerissa
+                        $userColorData = \App\Services\ThemeColorService::getUserColor($index);
+                        $headerBg = $userColorData['original'];
+                        $headerBorder = $userColorData['original'];
                     @endphp
                     <div
                             x-show="activeUser === '{{ $user->id }}'"
                             x-cloak
                             x-transition.opacity.scale.90.duration.200
-                            class="relative rounded-2xl  bg-white shadow-lg ring-1 ring-primary-200/60 lg:z-10 lg:-ml-1"
+                            class="relative rounded-2xl shadow-lg lg:z-10 lg:-ml-1"
                             style="border-color: {{ $headerBorder }}"
                     >
                         <div class="px-6 py-6 rounded-tl-2xl  rounded-tr-2xl"

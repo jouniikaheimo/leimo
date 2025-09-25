@@ -85,6 +85,102 @@ class ThemeColorService
     }
 
     /**
+     * Get user colors for event log
+     */
+    public static function getUserColors(): array
+    {
+        $colorsData = Setting::get('theme.user_colors', '[]');
+
+        // Jos data on jo array, käytä sitä suoraan
+        if (is_array($colorsData)) {
+            $colors = $colorsData;
+        } else {
+            // Jos data on string, dekoodaa se JSON:sta
+            $colors = json_decode($colorsData, true) ?: [];
+        }
+
+        // Default colors if none are set
+        if (empty($colors)) {
+            return [
+                '#3b82f6', // Blue
+                '#10b981', // Green
+                '#f59e0b', // Yellow
+                '#ef4444', // Red
+                '#8b5cf6', // Purple
+                '#06b6d4', // Cyan
+                '#f97316', // Orange
+                '#84cc16', // Lime
+            ];
+        }
+
+        return $colors;
+    }
+
+    /**
+     * Set user colors for event log
+     */
+    public static function setUserColors(array $colors): void
+    {
+        Setting::set('theme.user_colors', json_encode(array_values($colors)));
+    }
+
+    /**
+     * Get color for specific user index (cycles through available colors)
+     */
+    public static function getUserColor(int $userIndex): array
+    {
+        $colors = self::getUserColors();
+        $color = $colors[$userIndex % count($colors)];
+
+        // Convert hex to HSL for background and border
+        $hsl = self::hexToHsl($color);
+        $bg = "hsl({$hsl['h']} 65% 88%)";   // pastel background
+        $border = "hsl({$hsl['h']} 45% 70%)"; // slightly darker for border
+
+        return [
+            'original' => $color,
+            'background' => $bg,
+            'border' => $border
+        ];
+    }
+
+    /**
+     * Convert hex color to HSL
+     */
+    public static function hexToHsl(string $hex): array
+    {
+        $hex = ltrim($hex, '#');
+        $r = hexdec(substr($hex, 0, 2)) / 255;
+        $g = hexdec(substr($hex, 2, 2)) / 255;
+        $b = hexdec(substr($hex, 4, 2)) / 255;
+
+        $max = max($r, $g, $b);
+        $min = min($r, $g, $b);
+        $h = $s = $l = ($max + $min) / 2;
+
+        if ($max == $min) {
+            $h = $s = 0; // achromatic
+        } else {
+            $d = $max - $min;
+            $s = $l > 0.5 ? $d / (2 - $max - $min) : $d / ($max + $min);
+            switch ($max) {
+                case $r: $h = ($g - $b) / $d + ($g < $b ? 6 : 0); break;
+                case $g: $h = ($b - $r) / $d + 2; break;
+                case $b: $h = ($r - $g) / $d + 4; break;
+            }
+            $h /= 6;
+        }
+
+        return [
+            'h' => round($h * 360),
+            's' => round($s * 100),
+            'l' => round($l * 100),
+            'original' => "#$hex"
+        ];
+    }
+
+
+    /**
      * Reset all colors to defaults
      */
     public static function resetToDefaults(): void
@@ -99,6 +195,18 @@ class ThemeColorService
         ];
 
         self::setColors($defaults);
+
+        // Reset user colors to defaults
+        self::setUserColors([
+            '#3b82f6', // Blue
+            '#10b981', // Green
+            '#f59e0b', // Yellow
+            '#ef4444', // Red
+            '#8b5cf6', // Purple
+            '#06b6d4', // Cyan
+            '#f97316', // Orange
+            '#84cc16', // Lime
+        ]);
     }
 
     /**
@@ -217,8 +325,8 @@ class ThemeColorService
         return [
             'background_mode' => Setting::get('theme.background_mode', 'solid'), // solid | gradient
             'background_color' => Setting::get('theme.background_color', '#f3f4f6'),
-            'gradient_start_color' => Setting::get('theme.gradient_start_color', Setting::get('theme.primary_color', '#3b82f6')),
-            'gradient_end_color' => Setting::get('theme.gradient_end_color', Setting::get('theme.accent_color', '#8b5cf6')),
+            'gradient_start_color' => Setting::get('theme.gradient_start_color', '#3b82f6'), // Kiinteä oletusarvo, ei riippuvuutta primary_color:iin
+            'gradient_end_color' => Setting::get('theme.gradient_end_color', '#8b5cf6'),   // Kiinteä oletusarvo, ei riippuvuutta accent_color:iin
             'gradient_type' => Setting::get('theme.gradient_type', 'linear'), // linear | radial
             'gradient_direction' => Setting::get('theme.gradient_direction', 'to right'), // linear dirs
         ];

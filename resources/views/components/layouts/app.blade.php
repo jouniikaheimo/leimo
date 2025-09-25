@@ -8,6 +8,9 @@
     @php
         // Load theme colors for inline CSS
         $themeColors = \App\Services\ThemeColorService::getAllColors();
+        $backgroundSettings = \App\Services\ThemeColorService::getBackgroundSettings();
+        $backgroundCssData = \App\Services\ThemeColorService::getBackgroundCss();
+        $backgroundCss = $backgroundCssData['css'] ?? 'background: #f3f4f6;';
     @endphp
 
     <style>
@@ -21,16 +24,29 @@
             --theme-danger: {{ \App\Services\ThemeColorService::hexToRgb($themeColors['danger'])['r'] }}, {{ \App\Services\ThemeColorService::hexToRgb($themeColors['danger'])['g'] }}, {{ \App\Services\ThemeColorService::hexToRgb($themeColors['danger'])['b'] }};
         }
 
-        /* Filament main container theming */
+        /* Filament main container theming - NOW USES PROPER GRADIENT SYSTEM */
         .fi-panel-admin,
         .fi-main-ctn,
         .fi-main {
-            background: linear-gradient(
-                    135deg,
-                    rgba(var(--theme-primary), 0.08) 0%,
-                    rgba(var(--theme-secondary), 0.06) 50%,
-                    rgba(var(--theme-accent), 0.08) 100%
-            ) !important;
+            {{ $backgroundCss }} !important;
+        }
+
+        /* EXTRA HIGH SPECIFICITY - FORCE OVERRIDE ANY CONFLICTING CSS */
+        body .fi-panel-admin,
+        body .fi-main-ctn,
+        body .fi-main,
+        html body .fi-panel-admin,
+        html body .fi-main-ctn,
+        html body .fi-main {
+            {{ $backgroundCss }} !important;
+        }
+
+        /* Additional targeting for common Filament containers */
+        .fi-page,
+        .fi-simple-page,
+        .fi-resource-page,
+        .fi-dashboard-page {
+            {{ $backgroundCss }} !important;
         }
 
         /* Filament sidebar theming */
@@ -86,20 +102,18 @@
             backdrop-filter: blur(4px);
         }
 
-        /* Dark mode support */
+        /* Dark mode support - ALSO USES PROPER GRADIENT SYSTEM */
         .dark .fi-panel-admin,
         .dark .fi-main-ctn,
         .dark .fi-main {
-            background: linear-gradient(135deg,
-                rgb(var(--theme-primary) / 0.08) 0%,
-                rgb(var(--theme-secondary) / 0.06) 50%,
-                rgb(var(--theme-accent) / 0.08) 100%) !important;
+            {{ $backgroundCss }} !important;
         }
 
-        .dark .fi-sidebar {
-            background: linear-gradient(180deg,
-                rgb(var(--theme-primary) / 0.15) 0%,
-                rgb(var(--theme-secondary) / 0.12) 100%) !important;
+        /* Extra dark mode specificity */
+        html.dark body .fi-panel-admin,
+        html.dark body .fi-main-ctn,
+        html.dark body .fi-main {
+            {{ $backgroundCss }} !important;
         }
 
         /* Theme utility classes for custom use */

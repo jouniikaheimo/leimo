@@ -123,15 +123,7 @@ class AdminPanelProvider extends PanelProvider
                 .debug-accent-08 { background: rgba({$accentRgb}, 0.08) !important; }
                 .debug-accent-05 { background: rgba({$accentRgb}, 0.05) !important; }
                 
-                .fi-panel-admin,
-                .fi-main-ctn,
-                .fi-main {
-                    background: linear-gradient(135deg,
-                        rgba({$primaryRgb}, {$mainOpacity}) 0%,
-                        rgba({$secondaryRgb}, " . ($mainOpacity * 0.67) . ") 50%,
-                        rgba({$accentRgb}, {$mainOpacity}) 100%) !important;
-                }
-                
+               
                 .fi-sidebar {
                     background: linear-gradient(180deg, 
                         rgba({$primaryRgb}, {$sidebarOpacity}) 0%, 

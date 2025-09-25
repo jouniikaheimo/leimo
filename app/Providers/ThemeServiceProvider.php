@@ -35,10 +35,28 @@ class ThemeServiceProvider extends ServiceProvider
         // Rekisteröidään taustagradientti / taustaväri head:iin (Filament panel)
         try {
             FilamentView::registerRenderHook(PanelsRenderHook::HEAD_END, function () {
-                $bg = \App\Services\ThemeColorService::getBackgroundCss();
-                $css = preg_replace('/[^#(),.%a-zA-Z0-9\s:-]/', '', $bg['css']);
-                // Luo lopullinen style - $css sisältää esim. "background: linear-gradient(...);"
-                return "<style id=\"app-background-style\">body{ {$css} } .fi-body{ {$css} }</style>";
+                $backgroundData = \App\Services\ThemeColorService::getBackgroundCss();
+                // getBackgroundCss() palauttaa arrayn jossa on 'css' avain
+                $backgroundCss = $backgroundData['css'] ?? '';
+                // Parannettu sanitointi joka sallii kaikki kelvolliset CSS gradient merkit
+                $safeCss = preg_replace('/[^#(),.%a-zA-Z0-9\s:;\-]/', '', $backgroundCss);
+
+                // Luo kattava CSS joka kohdistuu Filament-paneliin
+                return "
+                <style id=\"app-background-style\">
+                    body,
+                    .fi-body,
+                    .fi-panel-admin,
+                    .fi-main-ctn,
+                    .fi-main {
+                        {$safeCss}
+                    }
+                    
+                    /* Varmista että koko sivu on peitetty */
+                    html {
+                        {$safeCss}
+                    }
+                </style>";
             });
         } catch (\Throwable $e) {
             // hiljainen fallback
