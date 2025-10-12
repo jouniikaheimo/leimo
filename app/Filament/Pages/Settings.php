@@ -38,6 +38,7 @@ class Settings extends Page implements HasForms
         $colors = ThemeColorService::getAllColors();
         $opacities = ThemeColorService::getOpacitySettings();
         $background = ThemeColorService::getBackgroundSettings();
+        $tabSettings = ThemeColorService::getTabSettings();
         $workSettings = [
             'standard_shift_hours' => Setting::where('key', 'standard_shift_hours')->value('value') ?? config('timeclock.standard_shift_hours', 8)
         ];
@@ -54,7 +55,7 @@ class Settings extends Page implements HasForms
             $background['gradient_end_color'] = '#8b5cf6';
         }
 
-        $allSettings = array_merge($colors, $opacities, $background, $workSettings, [
+        $allSettings = array_merge($colors, $opacities, $background, $tabSettings, $workSettings, [
             'user_colors' => $userColorsRepeater
         ]);
         $this->form->fill($allSettings);
@@ -136,6 +137,53 @@ class Settings extends Page implements HasForms
                                             ColorPicker::make('summary_tab_bg')
                                                 ->label('Yhteenveto-tabi')
                                                 ->helperText('Kuukausikertymä -tabin tausta')
+                                                ->live(onBlur: true)
+                                                ->afterStateUpdated(fn () => $this->autoSave()),
+
+                                            ColorPicker::make('section_text_color')
+                                                ->label('Section tekstiväri')
+                                                ->helperText('Tekstin väri section-alueilla')
+                                                ->live(onBlur: true)
+                                                ->afterStateUpdated(fn () => $this->autoSave()),
+
+                                            ColorPicker::make('tab_border_color')
+                                                ->label('Tabien reunaväri')
+                                                ->helperText('Event Log -tabien reunojen väri')
+                                                ->live(onBlur: true)
+                                                ->afterStateUpdated(fn () => $this->autoSave()),
+
+                                            TextInput::make('tab_border_width')
+                                                ->label('Tabien reunapaksuus')
+                                                ->helperText('Pikseleinä, esim. 2')
+                                                ->numeric()
+                                                ->minValue(0)
+                                                ->maxValue(12)
+                                                ->step(0.5)
+                                                ->suffix('px')
+                                                ->live(onBlur: true)
+                                                ->afterStateUpdated(fn () => $this->autoSave()),
+                                        ])
+                                        ->columns(1)
+                                        ->compact(),
+
+                                    Section::make('🧭 Yläpalkki (topbar)')
+                                        ->description('Hallintapaneelin yläpalkin värit')
+                                        ->schema([
+                                            ColorPicker::make('topbar_bg')
+                                                ->label('Taustaväri')
+                                                ->helperText('Yläpalkin taustaväri')
+                                                ->live(onBlur: true)
+                                                ->afterStateUpdated(fn () => $this->autoSave()),
+
+                                            ColorPicker::make('topbar_text')
+                                                ->label('Tekstiväri')
+                                                ->helperText('Yläpalkin staattinen tekstiväri')
+                                                ->live(onBlur: true)
+                                                ->afterStateUpdated(fn () => $this->autoSave()),
+
+                                            ColorPicker::make('topbar_link')
+                                                ->label('Linkkien väri')
+                                                ->helperText('Linkkien ja painikkeiden väri yläpalkissa')
                                                 ->live(onBlur: true)
                                                 ->afterStateUpdated(fn () => $this->autoSave()),
                                         ])
@@ -406,12 +454,14 @@ class Settings extends Page implements HasForms
     public function save(): void
     {
         $data = $this->form->getState();
-        $colors = array_intersect_key($data, array_flip(['primary', 'secondary', 'accent', 'success', 'warning', 'danger', 'entries_tab_bg', 'summary_tab_bg']));
+        $colors = array_intersect_key($data, array_flip(['primary', 'secondary', 'accent', 'success', 'warning', 'danger', 'entries_tab_bg', 'summary_tab_bg', 'section_text_color', 'tab_border_color', 'topbar_bg', 'topbar_text', 'topbar_link']));
         $opacities = array_intersect_key($data, array_flip(['tab_background_opacity', 'main_background_opacity', 'sidebar_opacity']));
         $background = array_intersect_key($data, array_flip(['background_mode','background_color','gradient_start_color','gradient_end_color','gradient_type','gradient_direction']));
+        $tabSettings = array_intersect_key($data, array_flip(['tab_border_width']));
         if (!empty($colors)) ThemeColorService::setColors($colors);
         if (!empty($opacities)) ThemeColorService::setOpacitySettings($opacities);
         if (!empty($background)) ThemeColorService::setBackgroundSettings($background);
+        if (!empty($tabSettings)) ThemeColorService::setTabSettings($tabSettings);
         Setting::updateOrCreate(['key' => 'standard_shift_hours'], ['value' => $data['standard_shift_hours']]);
         Notification::make()->title('Asetukset tallennettu')->body('Teeman värit, tausta ja asetukset päivitetty.')->success()->send();
     }
@@ -420,12 +470,14 @@ class Settings extends Page implements HasForms
     public function autoSave(): void
     {
         $data = $this->form->getState();
-        $colors = array_intersect_key($data, array_flip(['primary', 'secondary', 'accent', 'success', 'warning', 'danger', 'entries_tab_bg', 'summary_tab_bg']));
+        $colors = array_intersect_key($data, array_flip(['primary', 'secondary', 'accent', 'success', 'warning', 'danger', 'entries_tab_bg', 'summary_tab_bg', 'section_text_color', 'tab_border_color', 'topbar_bg', 'topbar_text', 'topbar_link']));
         $opacities = array_intersect_key($data, array_flip(['tab_background_opacity', 'main_background_opacity', 'sidebar_opacity']));
         $background = array_intersect_key($data, array_flip(['background_mode','background_color','gradient_start_color','gradient_end_color','gradient_type','gradient_direction']));
+        $tabSettings = array_intersect_key($data, array_flip(['tab_border_width']));
         if (!empty($colors)) ThemeColorService::setColors($colors);
         if (!empty($opacities)) ThemeColorService::setOpacitySettings($opacities);
         if (!empty($background)) ThemeColorService::setBackgroundSettings($background);
+        if (!empty($tabSettings)) ThemeColorService::setTabSettings($tabSettings);
     }
 
     // Automaattinen tallennusmetodi käyttäjäväreille
@@ -467,6 +519,10 @@ class Settings extends Page implements HasForms
             ThemeColorService::getAllColors(),
             ThemeColorService::getOpacitySettings(),
             ThemeColorService::getBackgroundSettings(),
+            ThemeColorService::getTabSettings(),
+            [
+                'user_colors' => $userColorsRepeater,
+            ],
         ));
         Notification::make()->title('Asetukset palautettu')->success()->send();
     }

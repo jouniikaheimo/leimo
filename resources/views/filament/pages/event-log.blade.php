@@ -54,7 +54,7 @@
     @if ($userSummaries->isEmpty())
         <x-filament::section>
             <p class="text-sm text-gray-500">
-                Ei käyttäjiä tai kellokortin kirjauksia.
+                {{ __('event-log.no_users') }}
             </p>
         </x-filament::section>
     @else
@@ -65,17 +65,38 @@
                 $shift = (string) ($filters['shift_hours'] ?? 8);
                 $entryGroup = $filters['entry_group'] ?? 'all';
                 $baseUrl = url()->current();
-                $entriesTabBg = \App\Services\ThemeColorService::getAllColors()['entries_tab_bg'];
-                $summaryTabBg = \App\Services\ThemeColorService::getAllColors()['summary_tab_bg'];
+                $colorSettings = \App\Services\ThemeColorService::getAllColors();
+                $tabSettings = \App\Services\ThemeColorService::getTabSettings();
+                $entriesTabBg = $colorSettings['entries_tab_bg'];
+                $summaryTabBg = $colorSettings['summary_tab_bg'];
+                $tabBorderColor = $colorSettings['tab_border_color'] ?? '#1f2937';
+                $tabBorderWidth = $tabSettings['tab_border_width'] ?? 2;
+                $filtersTranslations = \Illuminate\Support\Facades\Lang::get('event-log.filters');
+                $scrollTranslations = \Illuminate\Support\Facades\Lang::get('event-log.scroll');
+                $userHeaderTranslations = \Illuminate\Support\Facades\Lang::get('event-log.user_header');
+                $tabsTranslations = \Illuminate\Support\Facades\Lang::get('event-log.tabs');
+                $entryCardTranslations = \Illuminate\Support\Facades\Lang::get('event-log.entry_card');
+                $summaryTranslations = \Illuminate\Support\Facades\Lang::get('event-log.summary');
+                $shiftOptions = [
+                    '7.5' => $filtersTranslations['shift_options']['7_5'],
+                    '8' => $filtersTranslations['shift_options']['8'],
+                    '9' => $filtersTranslations['shift_options']['9'],
+                ];
+                $groupOptions = [
+                    'all' => $filtersTranslations['group_options']['all'],
+                    'work' => $filtersTranslations['group_options']['work'],
+                    'breaks' => $filtersTranslations['group_options']['breaks'],
+                ];
+                $quickFilters = $filtersTranslations['quick'];
             @endphp
 
             <form method="GET" action="{{ $baseUrl }}" class="flex flex-wrap items-end gap-3">
                 <div>
-                    <label class="text-xs font-medium text-gray-500">Aikaväli</label>
+                    <label class="text-xs font-medium text-gray-500">{{ $filtersTranslations['period_label'] }}</label>
                     <div class="flex flex-wrap gap-2">
-                        <a href="{{ request()->fullUrlWithQuery(['from' => now()->toDateString(), 'until' => now()->toDateString()]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">Päivä</a>
-                        <a href="{{ request()->fullUrlWithQuery(['from' => now()->startOfWeek()->toDateString(), 'until' => now()->endOfWeek()->toDateString()]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">Viikko</a>
-                        <a href="{{ request()->fullUrlWithQuery(['from' => now()->startOfMonth()->toDateString(), 'until' => now()->endOfMonth()->toDateString()]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">Kuukausi</a>
+                        <a href="{{ request()->fullUrlWithQuery(['from' => now()->toDateString(), 'until' => now()->toDateString()]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">{{ $quickFilters['day'] }}</a>
+                        <a href="{{ request()->fullUrlWithQuery(['from' => now()->startOfWeek()->toDateString(), 'until' => now()->endOfWeek()->toDateString()]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">{{ $quickFilters['week'] }}</a>
+                        <a href="{{ request()->fullUrlWithQuery(['from' => now()->startOfMonth()->toDateString(), 'until' => now()->endOfMonth()->toDateString()]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">{{ $quickFilters['month'] }}</a>
                         @php
                             $startHalf = now()->startOfMonth()->toDateString();
                             $mid = now()->startOfMonth()->addDays(14)->toDateString();
@@ -94,43 +115,43 @@
                                 $lppUntil = now()->startOfMonth()->addDays(14)->toDateString();
                             }
                         @endphp
-                        <a href="{{ request()->fullUrlWithQuery(['from' => $startHalf, 'until' => $mid]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">1.–15.</a>
-                        <a href="{{ request()->fullUrlWithQuery(['from' => Carbon\Carbon::parse($mid)->addDay()->toDateString(), 'until' => $endMonth]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">16.–kk loppu</a>
-                        <a href="{{ request()->fullUrlWithQuery(['from' => $lastWeekStart, 'until' => $lastWeekEnd]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">Viime viikko</a>
-                        <a href="{{ request()->fullUrlWithQuery(['from' => $lastMonthStart, 'until' => $lastMonthEnd]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">Viime kk</a>
-                        <a href="{{ request()->fullUrlWithQuery(['from' => $lppFrom, 'until' => $lppUntil]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">Viime palkkajakso</a>
+                        <a href="{{ request()->fullUrlWithQuery(['from' => $startHalf, 'until' => $mid]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">{{ $quickFilters['first_half'] }}</a>
+                        <a href="{{ request()->fullUrlWithQuery(['from' => Carbon\Carbon::parse($mid)->addDay()->toDateString(), 'until' => $endMonth]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">{{ $quickFilters['second_half'] }}</a>
+                        <a href="{{ request()->fullUrlWithQuery(['from' => $lastWeekStart, 'until' => $lastWeekEnd]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">{{ $quickFilters['last_week'] }}</a>
+                        <a href="{{ request()->fullUrlWithQuery(['from' => $lastMonthStart, 'until' => $lastMonthEnd]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">{{ $quickFilters['last_month'] }}</a>
+                        <a href="{{ request()->fullUrlWithQuery(['from' => $lppFrom, 'until' => $lppUntil]) }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm hover:border-primary-400">{{ $quickFilters['last_pay_period'] }}</a>
                     </div>
                 </div>
 
                 <div>
-                    <label class="text-xs font-medium text-gray-500">Alkaen</label>
+                    <label class="text-xs font-medium text-gray-500">{{ $filtersTranslations['from'] }}</label>
                     <input type="date" name="from" value="{{ $from }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm" />
                 </div>
                 <div>
-                    <label class="text-xs font-medium text-gray-500">Asti</label>
+                    <label class="text-xs font-medium text-gray-500">{{ $filtersTranslations['until'] }}</label>
                     <input type="date" name="until" value="{{ $until }}" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm" />
                 </div>
 
                 <div>
-                    <label class="text-xs font-medium text-gray-500">Oletusvuoro</label>
+                    <label class="text-xs font-medium text-gray-500">{{ $filtersTranslations['default_shift'] }}</label>
                     <select name="shift_hours" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm">
-                        @foreach (['7.5' => '7 h 30 min', '8' => '8 h', '9' => '9 h'] as $value => $label)
-                            <option value="{{ $value }}" @selected((string) $value === $shift)>{{ $label }}</option>
+                        @foreach ($shiftOptions as $value => $label)
+                            <option value="{{ $value }}" @selected((string) $value === $shift)> {{ $label }}</option>
                         @endforeach
                     </select>
                 </div>
 
                 <div>
-                    <label class="text-xs font-medium text-gray-500">Suodatus</label>
+                    <label class="text-xs font-medium text-gray-500">{{ $filtersTranslations['group'] }}</label>
                     <select name="entry_group" class="rounded-lg border border-gray-200 px-3 py-1.5 text-sm">
-                        <option value="all" @selected($entryGroup === 'all')>Kaikki</option>
-                        <option value="work" @selected($entryGroup === 'work')>Työvuorot</option>
-                        <option value="breaks" @selected($entryGroup === 'breaks')>Tauot</option>
+                        @foreach ($groupOptions as $value => $label)
+                            <option value="{{ $value }}" @selected($entryGroup === $value)>{{ $label }}</option>
+                        @endforeach
                     </select>
                 </div>
 
                 <div class="mb-0.5">
-                    <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-primary-700">Käytä</button>
+                    <button type="submit" class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-primary-700">{{ $filtersTranslations['apply'] }}</button>
                 </div>
             </form>
         </x-filament::section>
@@ -147,110 +168,83 @@
                     showTop: false,
                     showBottom: false,
                     update() {
-                        const el = $refs.tabList;
+                        const el = this.$refs.tabList;
                         if (!el) return;
 
                         this.showTop = el.scrollTop > 5;
                         this.showBottom = (el.scrollTop + el.clientHeight) < (el.scrollHeight - 5);
                     },
                     scrollBy(y) {
-                        $refs.tabList?.scrollBy({ top: y, behavior: 'smooth' });
-                    }
+                        this.$refs.tabList?.scrollBy({ top: y, behavior: 'smooth' });
+                    },
+                    scrollToActive(userId) {
+                        if (!userId) return;
+                        this.$nextTick(() => {
+                            const list = this.$refs.tabList;
+                            if (!list) return;
+                            const active = list.querySelector('[data-user-tab=&quot;' + userId + '&quot;]');
+                            if (!active) return;
+
+                            if (list.scrollHeight > list.clientHeight + 1) {
+                                const topTarget = active.offsetTop - list.offsetTop - 8;
+                                list.scrollTo({ top: topTarget, behavior: 'smooth' });
+                            }
+                        });
+                    },
                 }"
                     x-init="$nextTick(() => update())"
+                    x-effect="scrollToActive(activeUser)"
             >
-                <!-- Top scroll button -->
                 <div
-                        x-show="showTop"
-                        x-transition.opacity.duration.300
-                        class="flex justify-end lg:justify-center"
-                >
-                    <button
-                            type="button"
-                            @click="scrollBy(-140)"
-                            class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-500 shadow-sm backdrop-blur-sm transition-colors hover:bg-white hover:text-primary-600 focus-visible:outline-none dark:border-slate-700/50 dark:bg-slate-800/90 dark:text-slate-300 lg:h-11 lg:w-11"
-                            title="Vieritä ylös"
-                            aria-label="Vieritä ylös"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
-                            <path fill-rule="evenodd" d="M12 7.5a.75.75 0 0 1 .53.22l6 6a.75.75 0 1 1-1.06 1.06L12 9.31l-5.47 5.47a.75.75 0 0 1-1.06-1.06l6-6A.75.75 0 0 1 12 7.5z" clip-rule="evenodd"/>
-                        </svg>
-                    </button>
-                </div>
-
-                <!-- User tabs list -->
-                <div
-                        class="relative flex h-full w-full flex-col items-end gap-2 overflow-y-auto pb-0 pr-0 pt-3 no-scrollbar"
+                        class="relative flex h-full w-full flex-col items-end gap-2 overflow-y-auto pb-0 pr-0 no-scrollbar"
                         x-ref="tabList"
                         @scroll.passive="update()"
                 >
-                    @foreach ($userSummaries as $index => $summary)
-                        @php
-                            $user = $summary['user'];
+                @foreach ($userSummaries as $index => $summary)
+                    @php
+                        $user = $summary['user'];
+                        $userColorData = \App\Services\ThemeColorService::getUserColor($index);
+                        $bg = $userColorData['original'];
+                        $border = $userColorData['original'];
 
-                            // Käytä asetuksista määriteltyjä käyttäjävärejä
-                            $userColorData = \App\Services\ThemeColorService::getUserColor($index);
-                            $bg = $userColorData['original'];
-                            $border = $userColorData['original'];
+                        if ($index < 3) {
+                            \Log::info("EventLog User $index ({$user->name}): Original={$userColorData['original']}, BG=$bg, Border=$border");
+                        }
 
-                            // DEBUG: Tulosta värit konsoliin (poista tämä kun toimii)
-                            if ($index < 3) {
-                                \Log::info("EventLog User $index ({$user->name}): Original={$userColorData['original']}, BG=$bg, Border=$border");
-                            }
-
-                            // Build two-letter initials
-                            $parts = array_values(array_filter(preg_split('/\s+/', trim((string) $user->name))));
-                            $first = Str::upper(Str::substr($parts[0] ?? '', 0, 1));
-                            $last = Str::upper(Str::substr($parts[count($parts) - 1] ?? '', 0, 1));
-                            $initials = $first . (count($parts) > 1 ? $last : Str::upper(Str::substr($parts[0] ?? '', 1, 1)));
-                        @endphp
-                        <button
-                                type="button"
-                                @click="activeUser = '{{ $user->id }}'"
-                                title="{{ $user->name }}"
-                                class="relative flex h-28 min-w-[4.25rem] items-center justify-center rounded-xl text-left shadow-sm transition focus-visible:outline-none
-           lg:h-32 lg:w-[4.25rem] lg:flex-col lg:items-center lg:justify-start lg:rounded-l-2xl lg:rounded-r-none lg:py-2 lg:gap-0 lg:transition-all lg:duration-200 lg:ease-out"
-                                :class="activeUser === '{{ $user->id }}'
-        ? 'lg:z-10 lg:translate-x-0 lg:opacity-100 lg:shadow'
-        : 'lg:translate-x-[0.5rem] lg:opacity-80 hover:lg:translate-x-0 hover:lg:opacity-100'"
-                                style="background-color: {{ $bg }}; border-color: {{ $border }}"
-                        >
-    <span class="flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold uppercase tracking-wide"
-          style="border-color: {{ $border }}; color:#334155; background-color:rgba(255,255,255,0.7)">
-        {{ $initials }}
-    </span>
-                            <!-- Overtime indicator below avatar -->
-                            <div class="hidden lg:flex lg:h-9 lg:w-9 lg:items-center lg:justify-center ">
-                                @if (($summary['flags']['open_overtime'] ?? false) === true)
-                                    <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-                                @endif
-                            </div>
-
-                            <span class="ml-3 block text-left text-sm font-medium text-gray-700 lg:hidden">
-        {{ $user->name }}
-    </span>
-                        </button>
-
-                    @endforeach
-                </div>
-
-                <!-- Bottom scroll button -->
-                <div
-                        x-show="showBottom"
-                        x-transition.opacity.duration.300
-                        class="flex justify-end lg:justify-center"
-                >
+                        $parts = array_values(array_filter(preg_split('/\s+/', trim((string) $user->name))));
+                        $first = Str::upper(Str::substr($parts[0] ?? '', 0, 1));
+                        $last = Str::upper(Str::substr($parts[count($parts) - 1] ?? '', 0, 1));
+                        $initials = $first . (count($parts) > 1 ? $last : Str::upper(Str::substr($parts[0] ?? '', 1, 1)));
+                    @endphp
                     <button
+                            data-user-tab="{{ $user->id }}"
                             type="button"
-                            @click="scrollBy(140)"
-                            class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white/90 text-gray-500 shadow-sm backdrop-blur-sm transition-colors hover:bg-white hover:text-primary-600 focus-visible:outline-none dark:border-slate-700/50 dark:bg-slate-800/90 dark:text-slate-300 lg:h-11 lg:w-11"
-                            title="Vieritä alas"
-                            aria-label="Vieritä alas"
+                            @click="activeUser = '{{ $user->id }}'"
+                            title="{{ $user->name }}"
+                            class="relative flex h-28 min-w-[4.25rem] items-center justify-center rounded-xl text-left shadow-sm transition focus-visible:outline-none
+                            lg:h-32 lg:w-[4.25rem] lg:flex-col lg:items-center lg:justify-start lg:rounded-l-2xl lg:rounded-r-none lg:py-2 lg:gap-0 lg:transition-all lg:duration-200 lg:ease-out"
+                            :class="activeUser === '{{ $user->id }}'
+                            ? 'lg:z-10 lg:translate-x-0 lg:opacity-100 lg:shadow'
+                            : 'lg:translate-x-[0.5rem] lg:opacity-80 hover:lg:translate-x-0 hover:lg:opacity-100'"
+                            style="background-color: {{ $bg }}; border: {{ $tabBorderWidth }}px solid {{ $tabBorderColor }};"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4">
-                            <path fill-rule="evenodd" d="M12 16.5a.75.75 0 0 1-.53-.22l-6-6A.75.75 0 1 1 6.53 9.2L12 14.69l5.47-5.47a.75.75 0 1 1 1.06 1.06l-6 6a.75.75 0 0 1-.53.22z" clip-rule="evenodd"/>
-                        </svg>
+                        <span
+                                class="flex h-9 w-9 items-center justify-center rounded-full border text-xs font-semibold uppercase tracking-wide"
+                                style="border: {{ $tabBorderWidth }}px solid {{ $tabBorderColor }}; color:#334155; background-color:rgba(255,255,255,0.7);"
+                        >
+                            {{ $initials }}
+                        </span>
+                        <div class="hidden lg:flex lg:h-9 lg:w-9 lg:items-center lg:justify-center">
+                            @if (($summary['flags']['open_overtime'] ?? false) === true)
+                                <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                            @endif
+                        </div>
+
+                        <span class="ml-3 block text-left text-sm font-medium text-gray-700 lg:hidden">
+                            {{ $user->name }}
+                        </span>
                     </button>
+                @endforeach
                 </div>
             </div>
 
@@ -269,10 +263,10 @@
                             x-show="activeUser === '{{ $user->id }}'"
                             x-cloak
                             x-transition.opacity.scale.90.duration.200
-                            class="relative rounded-2xl shadow-lg lg:z-10 lg:-ml-1"
+                            class="relative rounded-2xl lg:z-10 lg:-ml-1"
                             style="border-color: {{ $headerBorder }}"
                     >
-                        <div class="px-6 py-6 rounded-tl-2xl  rounded-tr-2xl"
+                        <div class="px-6 py-6 rounded-tr-2xl"
                              style="background-color: {{ $headerBg }}; border-color: {{ $headerBorder }}">
                             <x-filament::section>
                                 <div class="grid gap-6 sm:grid-cols-2">
@@ -280,44 +274,44 @@
                                     </x-slot>
                                     <div class="space-y-3">
                                         <div>
-                                            <p class="text-xs uppercase tracking-wide text-gray-500">Nimi</p>
+                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $userHeaderTranslations['name'] }}</p>
                                             <p class="text-sm font-semibold text-gray-900">{{ $user->name }}</p>
                                         </div>
                                         <div>
-                                            <p class="text-xs uppercase tracking-wide text-gray-500">Hetu</p>
-                                            <p class="text-sm font-medium text-gray-900">{{ $user->personal_identity_number ?? '-' }}</p>
+                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $userHeaderTranslations['ssn'] }}</p>
+                                            <p class="text-sm font-medium text-gray-900">{{ $user->personal_identity_number ?? $userHeaderTranslations['not_available'] }}</p>
                                         </div>
                                         <div>
-                                            <p class="text-xs uppercase tracking-wide text-gray-500">Puhelin</p>
-                                            <p class="text-sm font-medium text-gray-900">{{ $user->phone ?? '-' }}</p>
+                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $userHeaderTranslations['phone'] }}</p>
+                                            <p class="text-sm font-medium text-gray-900">{{ $user->phone ?? $userHeaderTranslations['not_available'] }}</p>
                                         </div>
                                     </div>
 
                                     <div class="space-y-3">
                                         <div>
-                                            <p class="text-xs uppercase tracking-wide text-gray-500">Henkilönumero</p>
+                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $userHeaderTranslations['employee_number'] }}</p>
                                             <p class="text-sm font-medium text-gray-900">{{ $user->id }}</p>
                                         </div>
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div>
-                                                    <p class="text-xs uppercase tracking-wide text-gray-500">Kulkukortti</p>
+                                                    <p class="text-xs uppercase tracking-wide text-gray-500">{{ $userHeaderTranslations['badge'] }}</p>
                                                     <p class="text-sm font-medium text-gray-900">{{ $user->badge_number ?? '-' }}</p>
                                                 </div>
                                                 @php $cardValid = filled($user->badge_number); @endphp
                                                 <span class="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold {{ $cardValid ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-200 text-gray-700' }}">
-                                                    {{ $cardValid ? 'Voimassa' : 'Ei voimassa' }}
+                                                    {{ $cardValid ? $userHeaderTranslations['badge_valid'] : $userHeaderTranslations['badge_invalid'] }}
                                                 </span>
                                             </div>
                                             <p class="mt-1 text-xs text-gray-600">
-                                                Voimassa asti:
-                                                <span class="font-medium text-gray-900">—</span>
+                                                {{ $userHeaderTranslations['valid_until'] }}
+                                                <span class="font-medium text-gray-900">{{ $userHeaderTranslations['not_available'] }}</span>
                                             </p>
                                         </div>
                                         <div>
-                                            <p class="text-xs uppercase tracking-wide text-gray-500">Työsuhteen alku</p>
+                                            <p class="text-xs uppercase tracking-wide text-gray-500">{{ $userHeaderTranslations['employment_start'] }}</p>
                                             <p class="text-sm font-medium text-gray-900">
-                                                {{ $user->employment_started_at?->format('d.m.Y') ?? '-' }}
+                                                {{ $user->employment_started_at?->format('d.m.Y') ?? $userHeaderTranslations['not_available'] }}
                                             </p>
                                         </div>
                                     </div>
@@ -345,7 +339,7 @@
                                                 class="curved-tab inline-block list-none px-8 py-3 text-base rounded-t-3xl relative cursor-pointer transition-all duration-200"
                                                 :class="activeSection === 'entries' ? 'active' : ''"
                                                 @click="activeSection = 'entries'"
-                                                :style="'background: {{ $entriesTabBg }}; --tab-bg-color: {{ $entriesTabBg }};'"
+                                                :style="'background: {{ $entriesTabBg }}; --tab-bg-color: {{ $entriesTabBg }}; border: {{ $tabBorderWidth }}px solid {{ $tabBorderColor }};'"
                                             >
                                                 <a class="no-underline flex items-center gap-2" :class="activeSection === 'entries' ? 'text-white' : 'text-white'">
                                                     <div class="w-4 h-4 border-2 border-current rounded"></div>
@@ -364,7 +358,7 @@
                                                 class="curved-tab inline-block list-none px-8 py-3 text-base rounded-t-3xl relative cursor-pointer transition-all duration-200"
                                                 :class="activeSection === 'summary' ? 'active' : ''"
                                                 @click="activeSection = 'summary'"
-                                                :style="'background: {{ $summaryTabBg }}; --tab-bg-color: {{ $summaryTabBg }};'"
+                                                :style="'background: {{ $summaryTabBg }}; --tab-bg-color: {{ $summaryTabBg }}; border: {{ $tabBorderWidth }}px solid {{ $tabBorderColor }};'"
                                             >
                                                 <a class="no-underline flex items-center gap-2" :class="activeSection === 'summary' ? 'text-white' : 'text-white'">
                                                     <div class="w-4 h-4 rounded-full border-2 border-current">

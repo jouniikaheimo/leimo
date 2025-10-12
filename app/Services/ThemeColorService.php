@@ -39,6 +39,11 @@ class ThemeColorService
             'danger' => Setting::get('theme.danger_color', '#ef4444'),
             'entries_tab_bg' => Setting::get('theme.entries_tab_bg', '#ffffff'),
             'summary_tab_bg' => Setting::get('theme.summary_tab_bg', '#ffffff'),
+            'section_text_color' => Setting::get('theme.section_text_color', '#ffffff'), // Uusi tekstiväri asetus
+            'tab_border_color' => Setting::get('theme.tab_border_color', '#1f2937'),
+            'topbar_bg' => Setting::get('theme.topbar_bg', '#ffffff'),
+            'topbar_text' => Setting::get('theme.topbar_text', '#1f2937'),
+            'topbar_link' => Setting::get('theme.topbar_link', '#1f2937'),
         ];
     }
 
@@ -59,9 +64,10 @@ class ThemeColorService
      */
     public static function setColors(array $colors): void
     {
+        $directKeys = ['entries_tab_bg', 'summary_tab_bg', 'section_text_color', 'tab_border_color', 'topbar_bg', 'topbar_text', 'topbar_link'];
+
         foreach ($colors as $type => $color) {
-            // Handle special tab background colors
-            if (in_array($type, ['entries_tab_bg', 'summary_tab_bg'])) {
+            if (in_array($type, $directKeys, true)) {
                 Setting::set("theme.{$type}", $color);
             } else {
                 // Handle regular theme colors
@@ -84,6 +90,20 @@ class ThemeColorService
         self::applyThemeColors();
     }
 
+    public static function getTabSettings(): array
+    {
+        return [
+            'tab_border_width' => (float) Setting::get('theme.tab_border_width', 2),
+        ];
+    }
+
+    public static function setTabSettings(array $settings): void
+    {
+        if (array_key_exists('tab_border_width', $settings)) {
+            Setting::set('theme.tab_border_width', (float) $settings['tab_border_width']);
+        }
+    }
+
     /**
      * Get user colors for event log
      */
@@ -91,15 +111,12 @@ class ThemeColorService
     {
         $colorsData = Setting::get('theme.user_colors', '[]');
 
-        // Jos data on jo array, käytä sitä suoraan
         if (is_array($colorsData)) {
             $colors = $colorsData;
         } else {
-            // Jos data on string, dekoodaa se JSON:sta
             $colors = json_decode($colorsData, true) ?: [];
         }
 
-        // Default colors if none are set
         if (empty($colors)) {
             return [
                 '#3b82f6', // Blue
@@ -192,11 +209,15 @@ class ThemeColorService
             'success' => '#10b981',
             'warning' => '#f59e0b',
             'danger' => '#ef4444',
+            'section_text_color' => '#ffffff',
+            'tab_border_color' => '#1f2937',
+            'topbar_bg' => '#ffffff',
+            'topbar_text' => '#1f2937',
+            'topbar_link' => '#1f2937',
         ];
 
         self::setColors($defaults);
 
-        // Reset user colors to defaults
         self::setUserColors([
             '#3b82f6', // Blue
             '#10b981', // Green
@@ -207,72 +228,10 @@ class ThemeColorService
             '#f97316', // Orange
             '#84cc16', // Lime
         ]);
-    }
 
-    /**
-     * Convert hex color to Filament color palette
-     */
-    public static function hexToFilamentColor(string $hex): array
-    {
-        // Remove # if present
-        $hex = ltrim($hex, '#');
-
-        // Ensure we have a 6-character hex
-        if (strlen($hex) === 3) {
-            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
-        }
-
-        // Convert hex to RGB
-        $r = hexdec(substr($hex, 0, 2));
-        $g = hexdec(substr($hex, 2, 2));
-        $b = hexdec(substr($hex, 4, 2));
-
-        return self::generateColorPalette($r, $g, $b);
-    }
-
-    /**
-     * Generate a complete color palette from RGB values
-     */
-    private static function generateColorPalette(int $r, int $g, int $b): array
-    {
-        $palette = [];
-        $shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
-
-        foreach ($shades as $shade) {
-            if ($shade < 500) {
-                // Lighter shades - mix with white
-                $factor = (500 - $shade) / 450; // Adjusted for better light shade distribution
-                $newR = $r + ($factor * (255 - $r));
-                $newG = $g + ($factor * (255 - $g));
-                $newB = $b + ($factor * (255 - $b));
-            } elseif ($shade === 500) {
-                // Base color
-                $newR = $r;
-                $newG = $g;
-                $newB = $b;
-            } else {
-                // Darker shades
-                $factor = match($shade) {
-                    600 => 0.8,
-                    700 => 0.65,
-                    800 => 0.5,
-                    900 => 0.35,
-                    950 => 0.2,
-                };
-
-                $newR = $r * $factor;
-                $newG = $g * $factor;
-                $newB = $b * $factor;
-            }
-
-            $palette[$shade] = sprintf('rgb(%d, %d, %d)',
-                min(255, max(0, round($newR))),
-                min(255, max(0, round($newG))),
-                min(255, max(0, round($newB)))
-            );
-        }
-
-        return $palette;
+        self::setTabSettings([
+            'tab_border_width' => 2,
+        ]);
     }
 
     /**
@@ -302,6 +261,68 @@ class ThemeColorService
     }
 
     /**
+     * Convert hex color to Filament color palette
+     */
+    public static function hexToFilamentColor(string $hex): array
+    {
+        $hex = ltrim($hex, '#');
+
+        if (strlen($hex) === 3) {
+            $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+        }
+
+        $r = hexdec(substr($hex, 0, 2));
+        $g = hexdec(substr($hex, 2, 2));
+        $b = hexdec(substr($hex, 4, 2));
+
+        return self::generateColorPalette($r, $g, $b);
+    }
+
+    /**
+     * Generate a complete color palette from RGB values
+     */
+
+     
+    private static function generateColorPalette(int $r, int $g, int $b): array
+    {
+        $palette = [];
+        $shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+
+        foreach ($shades as $shade) {
+            if ($shade < 500) {
+                $factor = (500 - $shade) / 450;
+                $newR = $r + ($factor * (255 - $r));
+                $newG = $g + ($factor * (255 - $g));
+                $newB = $b + ($factor * (255 - $b));
+            } elseif ($shade === 500) {
+                $newR = $r;
+                $newG = $g;
+                $newB = $b;
+            } else {
+                $factor = match($shade) {
+                    600 => 0.8,
+                    700 => 0.65,
+                    800 => 0.5,
+                    900 => 0.35,
+                    950 => 0.2,
+                };
+
+                $newR = $r * $factor;
+                $newG = $g * $factor;
+                $newB = $b * $factor;
+            }
+
+            $palette[$shade] = sprintf('rgb(%d, %d, %d)',
+                min(255, max(0, round($newR))),
+                min(255, max(0, round($newG))),
+                min(255, max(0, round($newB)))
+            );
+        }
+
+        return $palette;
+    }
+
+    /**
      * Get CSS variables for theme colors
      */
     public static function getCssVariables(): string
@@ -320,6 +341,8 @@ class ThemeColorService
     /**
      * Get background related settings with defaults
      */
+
+
     public static function getBackgroundSettings(): array
     {
         return [
@@ -335,6 +358,8 @@ class ThemeColorService
     /**
      * Persist background settings
      */
+
+
     public static function setBackgroundSettings(array $data): void
     {
         $allowed = [
@@ -350,6 +375,8 @@ class ThemeColorService
     /**
      * Build CSS for body background
      */
+
+
     public static function getBackgroundCss(): array
     {
         $bg = self::getBackgroundSettings();
